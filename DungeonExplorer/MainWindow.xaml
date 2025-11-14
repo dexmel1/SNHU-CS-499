@@ -6,6 +6,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -22,8 +23,14 @@
             <TextBlock Text="{Binding Player.CurrentRoom}"/>
         </StackPanel>
 
+        <!-- Item in the room -->
+        <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,0,0,8">
+            <TextBlock Text="Item in this room: " FontWeight="Bold"/>
+            <TextBlock Text="{Binding CurrentRoomItem}"/>
+        </StackPanel>
+
         <!-- Inventory -->
-        <GroupBox Grid.Row="2" Header="Inventory" Margin="0,8,0,0">
+        <GroupBox Grid.Row="3" Header="Inventory" Margin="0,8,0,0">
             <ItemsControl ItemsSource="{Binding Player.Inventory}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -33,13 +40,13 @@
             </ItemsControl>
         </GroupBox>
 
-        <!-- Status + movement controls -->
-        <StackPanel Grid.Row="3" Margin="0,16,0,0">
+        <!-- Status + movement & pickup controls -->
+        <StackPanel Grid.Row="4" Margin="0,16,0,0">
             <TextBlock Text="{Binding StatusMessage}"
                    TextWrapping="Wrap"
                    Margin="0,0,0,8"/>
 
-            <Grid>
+            <Grid Margin="0,0,0,8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -67,6 +74,14 @@
                     Command="{Binding MoveEastCommand}"
                     Width="80" Margin="4"/>
             </Grid>
+
+            <!-- Pickup button -->
+            <Button Content="Pick Up Item"
+                Command="{Binding PickupItemCommand}"
+                Width="120"
+                HorizontalAlignment="Left"
+                Margin="4,0,0,0"/>
         </StackPanel>
     </Grid>
+
 </Window>

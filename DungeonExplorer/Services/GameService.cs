@@ -137,5 +137,44 @@ namespace DungeonExplorer.Services
             message = "You can't go that way.";
             return false;
         }
+
+        public Room? GetCurrentRoom(Player player)
+        {
+            Rooms.TryGetValue(player.CurrentRoom, out var room);
+            return room;
+        }
+
+        public bool TryPickupItem(Player player, out string message)
+        {
+            var room = GetCurrentRoom(player);
+            if (room == null)
+            {
+                message = "You cannot tell where you are.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(room.Item))
+            {
+                message = "There is nothing here to pick up.";
+                return false;
+            }
+
+            var itemName = room.Item;
+
+            // Already in inventory?
+            if (player.Inventory.Contains(itemName))
+            {
+                message = $"You already picked up the {itemName}.";
+                return false;
+            }
+
+            // Add to inventory and remove from room
+            player.Inventory.Add(itemName);
+            room.Item = null;
+
+            message = $"You pick up the {itemName} and add it to your inventory.";
+            return true;
+        }
+
     }
 }
