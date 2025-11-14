@@ -14,8 +14,15 @@ namespace DungeonExplorer.ViewModels
 
         public GameViewModel()
         {
-            // Temporary initial state
-            Player = new Player();
+            Player = new Player
+            {
+                Name = "Dex the Brave",
+                CurrentRoom = "Great Hall"
+            };
+
+            Player.Inventory.Add("Torch");
+            Player.Inventory.Add("Shield");
         }
+
     }
 }
