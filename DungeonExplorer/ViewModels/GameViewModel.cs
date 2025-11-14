@@ -32,6 +32,14 @@ namespace DungeonExplorer.ViewModels
             set => SetProperty(ref _statusMessage, value);
         }
 
+        private bool _isGameOver;
+
+        public bool IsGameOver
+        {
+            get => _isGameOver;
+            set => SetProperty(ref _isGameOver, value);
+        }
+
         // Movement commands
         public ICommand MoveNorthCommand { get; }
         public ICommand MoveSouthCommand { get; }
@@ -63,16 +71,33 @@ namespace DungeonExplorer.ViewModels
 
         private void Move(string direction)
         {
+            if (IsGameOver)
+            {
+                StatusMessage = "The game is over. Restart the game to play again.";
+                return;
+            }
+
             if (_gameService.TryMove(Player, direction, out var message))
             {
                 // Notify bindings that Player changed (for CurrentRoom)
                 OnPropertyChanged(nameof(Player));
                 // Update room item after moving
                 UpdateCurrentRoomItem();
+
+                // If player entered the Dungeon, resolve win/lose
+                if (Player.CurrentRoom == "Dungeon")
+                {
+                    bool won = _gameService.ResolveDungeonBattle(Player, out var battleMessage);
+                    StatusMessage = battleMessage;
+                    IsGameOver = true;
+                    return;
+                }
             }
 
+            // If player didn't early-return due to Dungeon resolution, show normal movement message
             StatusMessage = message;
         }
+
 
         private void UpdateCurrentRoomItem()
         {
@@ -82,6 +107,12 @@ namespace DungeonExplorer.ViewModels
 
         private void PickupItem()
         {
+            if (IsGameOver)
+            {
+                StatusMessage = "The game is over. Restart the game to play again.";
+                return;
+            }
+
             if (_gameService.TryPickupItem(Player, out var message))
             {
                 // Inventory changed -> notify UI

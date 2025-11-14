@@ -7,6 +7,17 @@ namespace DungeonExplorer.Services
     {
         public Dictionary<string, Room> Rooms { get; } = new();
 
+        private static readonly HashSet<string> RequiredItems = new()
+        {
+            "Shield",
+            "Armor",
+            "Sword",
+            "Bow",
+            "Torch",
+            "Arrows"
+        };
+
+
         public GameService()
         {
             InitializeRooms();
@@ -175,6 +186,31 @@ namespace DungeonExplorer.Services
             message = $"You pick up the {itemName} and add it to your inventory.";
             return true;
         }
+
+        public bool ResolveDungeonBattle(Player player, out string message)
+        {
+            // Check if player has all required items
+            var inventorySet = new HashSet<string>(player.Inventory);
+
+            bool hasAllItems = RequiredItems.IsSubsetOf(inventorySet);
+
+            if (!hasAllItems)
+            {
+                message =
+                    "You step into the Dungeon... Azog descends upon you!\n" +
+                    "Without all six legendary items, you are overwhelmed and defeated.";
+                return false; // lose
+            }
+
+            message =
+                "You step into the Dungeon... Azog charges!\n" +
+                "You blind him with the Torch and block with your Shield.\n" +
+                "Your Armor holds as you strike with your Sword.\n" +
+                "You slow his retreat with your Bow and finish him with a volley of Arrows.\n" +
+                "Azog is defeated. The castle is safe!";
+            return true; // win
+        }
+
 
     }
 }
