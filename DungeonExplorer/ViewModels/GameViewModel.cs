@@ -40,6 +40,27 @@ namespace DungeonExplorer.ViewModels
             set => SetProperty(ref _isGameOver, value);
         }
 
+        private int _moveCount;
+        public int MoveCount
+        {
+            get => _moveCount;
+            set => SetProperty(ref _moveCount, value);
+        }
+
+        private int _par;
+        public int Par
+        {
+            get => _par;
+            set => SetProperty(ref _par, value);
+        }
+
+        private int _score;
+        public int Score
+        {
+            get => _score;
+            set => SetProperty(ref _score, value);
+        }
+
         // Movement commands
         public ICommand MoveNorthCommand { get; }
         public ICommand MoveSouthCommand { get; }
@@ -56,10 +77,13 @@ namespace DungeonExplorer.ViewModels
                 CurrentRoom = "Great Hall"
             };
 
-            // Initialize item in the starting room (if any)
-            UpdateCurrentRoomItem();
+            // Compute par based on current layout (start, items, dungeon)
+            Par = _gameService.ComputePar(Player.CurrentRoom);
 
-            StatusMessage = "Your quest begins in the Great Hall...";
+            MoveCount = 0;
+            Score = 0;
+
+            StatusMessage = $"Your quest begins in the Great Hall... (Par: {Par} moves)";
 
             MoveNorthCommand = new RelayCommand(_ => Move("north"));
             MoveSouthCommand = new RelayCommand(_ => Move("south"));
@@ -67,7 +91,10 @@ namespace DungeonExplorer.ViewModels
             MoveWestCommand = new RelayCommand(_ => Move("west"));
 
             PickupItemCommand = new RelayCommand(_ => PickupItem());
+
+            UpdateCurrentRoomItem();
         }
+
 
         private void Move(string direction)
         {
@@ -79,6 +106,9 @@ namespace DungeonExplorer.ViewModels
 
             if (_gameService.TryMove(Player, direction, out var message))
             {
+                // Increment move counter
+                MoveCount = MoveCount + 1;
+
                 // Notify bindings that Player changed (for CurrentRoom)
                 OnPropertyChanged(nameof(Player));
                 // Update room item after moving
@@ -88,7 +118,19 @@ namespace DungeonExplorer.ViewModels
                 if (Player.CurrentRoom == "Dungeon")
                 {
                     bool won = _gameService.ResolveDungeonBattle(Player, out var battleMessage);
+
+                    // Apply move penalty if over par
+                    if (Par > 0 && MoveCount > Par)
+                    {
+                        int over = MoveCount - Par;
+                        int penalty = over * 5;
+                        Score -= penalty;
+                        battleMessage += $"\nYou were {over} moves over par (-{penalty} points).";
+                    }
+
+                    battleMessage += $"\nFinal Score: {Score}";
                     StatusMessage = battleMessage;
+
                     IsGameOver = true;
                     return;
                 }
@@ -119,6 +161,9 @@ namespace DungeonExplorer.ViewModels
                 OnPropertyChanged(nameof(Player));
                 // Room no longer has the item
                 UpdateCurrentRoomItem();
+
+                // Scoring: +100 per item
+                Score = Score + 100;
             }
 
             StatusMessage = message;

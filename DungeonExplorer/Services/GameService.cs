@@ -17,7 +17,6 @@ namespace DungeonExplorer.Services
             "Arrows"
         };
 
-
         public GameService()
         {
             InitializeRooms();
@@ -210,6 +209,168 @@ namespace DungeonExplorer.Services
                 "Azog is defeated. The castle is safe!";
             return true; // win
         }
+
+        private Dictionary<string, int> BfsDistances(string startRoomName)
+        {
+            var distances = new Dictionary<string, int>();
+            var queue = new Queue<string>();
+
+            distances[startRoomName] = 0;
+            queue.Enqueue(startRoomName);
+
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
+                var currentDist = distances[current];
+
+                if (!Rooms.TryGetValue(current, out var room))
+                    continue;
+
+                foreach (var nextRoomName in room.Exits.Values)
+                {
+                    if (!distances.ContainsKey(nextRoomName))
+                    {
+                        distances[nextRoomName] = currentDist + 1;
+                        queue.Enqueue(nextRoomName);
+                    }
+                }
+            }
+
+            return distances;
+        }
+
+        private static int GetDistance(Dictionary<string, int> distMap, string roomName, int defaultValue)
+        {
+            return distMap.TryGetValue(roomName, out var d) ? d : defaultValue;
+        }
+
+        public int ComputePar(string startRoomName)
+        {
+            const int INF = int.MaxValue / 4;
+            const string dungeonRoomName = "Dungeon";
+
+            // Identify item rooms from current layout
+            var itemRooms = new List<string>();
+
+            foreach (var room in Rooms.Values)
+            {
+                if (!string.IsNullOrWhiteSpace(room.Item) && RequiredItems.Contains(room.Item!))
+                {
+                    itemRooms.Add(room.Name);
+                }
+            }
+
+            int m = itemRooms.Count;
+            if (m == 0)
+            {
+                // No items → trivial par
+                return 0;
+            }
+
+            // BFS from start
+            var distFromStart = BfsDistances(startRoomName);
+
+            // BFS from each item room
+            var bfsFromItems = new Dictionary<string, Dictionary<string, int>>();
+            foreach (var roomName in itemRooms)
+            {
+                bfsFromItems[roomName] = BfsDistances(roomName);
+            }
+
+            // Build distance tables
+            var distStartToItem = new int[m];
+            var distItemToDungeon = new int[m];
+            var distItems = new int[m, m];
+
+            for (int i = 0; i < m; i++)
+            {
+                distStartToItem[i] = GetDistance(distFromStart, itemRooms[i], INF);
+
+                var fromItem = bfsFromItems[itemRooms[i]];
+                distItemToDungeon[i] = GetDistance(fromItem, dungeonRoomName, INF);
+
+                for (int j = 0; j < m; j++)
+                {
+                    if (i == j)
+                    {
+                        distItems[i, j] = 0;
+                        continue;
+                    }
+
+                    distItems[i, j] = GetDistance(fromItem, itemRooms[j], INF);
+                }
+            }
+
+            int fullMask = (1 << m) - 1;
+            var dp = new int[1 << m, m];
+
+            // Initialize dp with INF
+            for (int mask = 0; mask <= fullMask; mask++)
+            {
+                for (int i = 0; i < m; i++)
+                {
+                    dp[mask, i] = INF;
+                }
+            }
+
+            // Base cases: starting from Start → item i
+            for (int i = 0; i < m; i++)
+            {
+                dp[1 << i, i] = distStartToItem[i];
+            }
+
+            // Held–Karp DP
+            for (int mask = 0; mask <= fullMask; mask++)
+            {
+                for (int i = 0; i < m; i++)
+                {
+                    if ((mask & (1 << i)) == 0)
+                        continue;
+
+                    int prevMask = mask ^ (1 << i);
+                    if (prevMask == 0)
+                        continue;
+
+                    for (int j = 0; j < m; j++)
+                    {
+                        if ((prevMask & (1 << j)) == 0)
+                            continue;
+
+                        int prevDist = dp[prevMask, j];
+                        int step = distItems[j, i];
+
+                        if (prevDist >= INF || step >= INF)
+                            continue;
+
+                        int candidate = prevDist + step;
+                        if (candidate < dp[mask, i])
+                        {
+                            dp[mask, i] = candidate;
+                        }
+                    }
+                }
+            }
+
+            // Finish at Dungeon
+            int best = INF;
+            for (int i = 0; i < m; i++)
+            {
+                int route = dp[fullMask, i] + distItemToDungeon[i];
+                if (route < best)
+                {
+                    best = route;
+                }
+            }
+
+            if (best >= INF)
+            {
+                // Fallback if something is disconnected
+                return 0;
+            }
+
+            return best;
+        }
+
 
 
     }
