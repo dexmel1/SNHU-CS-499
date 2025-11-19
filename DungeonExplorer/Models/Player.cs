@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace DungeonExplorer.Models
 {
@@ -9,7 +10,7 @@ namespace DungeonExplorer.Models
         // Current room name
         public string CurrentRoom { get; set; } = "Great Hall";
 
-        // Items collected
-        public List<string> Inventory { get; set; } = new();
+        // Items collected - use ObservableCollection so UI updates when items change
+        public ObservableCollection<string> Inventory { get; } = new();
     }
 }

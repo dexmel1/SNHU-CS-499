@@ -12,6 +12,14 @@ namespace DungeonExplorer.ViewModels
 
         private string? _currentRoomItem;
 
+        private string BuildStatus(string coreMessage)
+        {
+            int totalItems = _gameService.RequiredItemCount;
+            int collected = Player.Inventory.Count;
+
+            return $"{coreMessage}\nItems: {collected}/{totalItems} | Moves: {MoveCount} | Par: {Par} | Score: {Score}";
+        }
+
         public string? CurrentRoomItem
         {
             get => _currentRoomItem;
@@ -83,7 +91,7 @@ namespace DungeonExplorer.ViewModels
             MoveCount = 0;
             Score = 0;
 
-            StatusMessage = $"Your quest begins in the Great Hall... (Par: {Par} moves)";
+            StatusMessage = BuildStatus("Your quest begins in the Great Hall...");
 
             MoveNorthCommand = new RelayCommand(_ => Move("north"));
             MoveSouthCommand = new RelayCommand(_ => Move("south"));
@@ -100,7 +108,7 @@ namespace DungeonExplorer.ViewModels
         {
             if (IsGameOver)
             {
-                StatusMessage = "The game is over. Restart the game to play again.";
+                StatusMessage = BuildStatus("The game is over. Restart the game to play again.");
                 return;
             }
 
@@ -129,7 +137,7 @@ namespace DungeonExplorer.ViewModels
                     }
 
                     battleMessage += $"\nFinal Score: {Score}";
-                    StatusMessage = battleMessage;
+                    StatusMessage = BuildStatus(battleMessage);
 
                     IsGameOver = true;
                     return;
@@ -137,7 +145,7 @@ namespace DungeonExplorer.ViewModels
             }
 
             // If player didn't early-return due to Dungeon resolution, show normal movement message
-            StatusMessage = message;
+            StatusMessage = BuildStatus(message);
         }
 
 
@@ -151,7 +159,7 @@ namespace DungeonExplorer.ViewModels
         {
             if (IsGameOver)
             {
-                StatusMessage = "The game is over. Restart the game to play again.";
+                StatusMessage = BuildStatus("The game is over. Restart the game to play again.");
                 return;
             }
 
@@ -166,7 +174,7 @@ namespace DungeonExplorer.ViewModels
                 Score = Score + 100;
             }
 
-            StatusMessage = message;
+            StatusMessage = BuildStatus(message);
         }
     }
 }

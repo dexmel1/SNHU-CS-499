@@ -17,9 +17,14 @@ namespace DungeonExplorer.Services
             "Arrows"
         };
 
+        public int RequiredItemCount => RequiredItems.Count;
+
+        private readonly Random _random = new();
+
         public GameService()
         {
             InitializeRooms();
+            RandomlyPlaceItems();
         }
 
         private void InitializeRooms()
@@ -43,7 +48,6 @@ namespace DungeonExplorer.Services
                     ["west"] = "Great Hall",
                     ["south"] = "Barracks"
                 },
-                Item = "Shield"
             };
 
             Rooms["Barracks"] = new Room
@@ -55,7 +59,6 @@ namespace DungeonExplorer.Services
                     ["north"] = "East Tower",
                     ["south"] = "Library"
                 },
-                Item = "Armor"
             };
 
             Rooms["Library"] = new Room
@@ -77,7 +80,6 @@ namespace DungeonExplorer.Services
                     ["east"] = "Library",
                     ["north"] = "Dungeon"
                 },
-                Item = "Sword"
             };
 
             Rooms["Stables"] = new Room
@@ -88,7 +90,6 @@ namespace DungeonExplorer.Services
                     ["north"] = "Kitchen",
                     ["east"] = "Bedroom"
                 },
-                Item = "Bow"
             };
 
             Rooms["Kitchen"] = new Room
@@ -100,7 +101,6 @@ namespace DungeonExplorer.Services
                     ["south"] = "Stables",
                     ["east"] = "Dungeon"
                 },
-                Item = "Torch"
             };
 
             Rooms["West Tower"] = new Room
@@ -111,7 +111,6 @@ namespace DungeonExplorer.Services
                     ["south"] = "Kitchen",
                     ["east"] = "Great Hall"
                 },
-                Item = "Arrows"
             };
 
             Rooms["Dungeon"] = new Room
@@ -125,6 +124,37 @@ namespace DungeonExplorer.Services
                     ["west"] = "Kitchen"
                 }
             };
+        }
+
+        private void RandomlyPlaceItems()
+        {
+            // Rooms eligible to hold items (exclude Dungeon)
+            var candidateRooms = Rooms.Values
+                .Where(r => !string.Equals(r.Name, "Dungeon", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            // Clear any existing items
+            foreach (var room in candidateRooms)
+            {
+                room.Item = null;
+            }
+
+            // We have 6 required items
+            var items = RequiredItems.ToList();
+
+            // Shuffle rooms
+            for (int i = candidateRooms.Count - 1; i > 0; i--)
+            {
+                int j = _random.Next(i + 1);
+                (candidateRooms[i], candidateRooms[j]) = (candidateRooms[j], candidateRooms[i]);
+            }
+
+            // Assign each item to a different room
+            int itemCount = Math.Min(items.Count, candidateRooms.Count);
+            for (int i = 0; i < itemCount; i++)
+            {
+                candidateRooms[i].Item = items[i];
+            }
         }
 
         public bool TryMove(Player player, string direction, out string message)
