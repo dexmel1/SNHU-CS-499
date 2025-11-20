@@ -16,15 +16,44 @@
             <RowDefinition Height="*"/>               <!-- Inventory -->
             <RowDefinition Height="Auto"/>            <!-- Status + Controls -->
         </Grid.RowDefinitions>
+        
+        <!-- Menu Overlay -->
+        <Border Background="#AA000000"
+        CornerRadius="12"
+        Padding="24"
+        Visibility="{Binding ShowMenuOverlay, Converter={StaticResource BoolToVis}}"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock Text="{Binding OverlayTitle}"
+                   FontSize="24"
+                   FontWeight="Bold"
+                   Foreground="White"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,8"/>
 
-        <!-- Game Over banner -->
-        <TextBlock Grid.Row="0"
-               Text="GAME OVER"
-               HorizontalAlignment="Center"
-               Foreground="Red"
-               FontSize="20"
-               FontWeight="Bold"
-               Visibility="{Binding IsGameOver, Converter={StaticResource BoolToVis}}"/>
+                <TextBlock Text="{Binding OverlaySubtitle}"
+                   FontSize="14"
+                   Foreground="White"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   Margin="0,0,0,16"/>
+
+                <Button Content="New Game"
+                Command="{Binding NewGameCommand}"
+                Width="120"
+                HorizontalAlignment="Center"
+                Margin="0,0,0,8"
+                Padding="4,2"/>
+
+                <Button Content="Main Menu"
+                Command="{Binding GoToMenuCommand}"
+                Width="120"
+                HorizontalAlignment="Center"
+                Padding="4,2"
+                Visibility="{Binding IsInGameOver, Converter={StaticResource BoolToVis}}"/>
+            </StackPanel>
+        </Border>
 
         <!-- Player info -->
         <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,0,0,8">

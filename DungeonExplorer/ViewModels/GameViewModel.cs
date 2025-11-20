@@ -4,9 +4,15 @@ using DungeonExplorer.Services;
 
 namespace DungeonExplorer.ViewModels
 {
+    public enum GameState
+    {
+        Menu,
+        Playing,
+        GameOver
+    }
     public class GameViewModel : BaseViewModel
     {
-        private readonly GameService _gameService;
+        private GameService _gameService;
         private Player _player;
         private string _statusMessage = string.Empty;
 
@@ -74,6 +80,54 @@ namespace DungeonExplorer.ViewModels
         public ICommand MoveSouthCommand { get; }
         public ICommand MoveEastCommand { get; }
         public ICommand MoveWestCommand { get; }
+        // Overlay
+        public ICommand NewGameCommand { get; }
+        public ICommand GoToMenuCommand { get; }
+
+        private GameState _state;
+
+        public GameState State
+        {
+            get => _state;
+            set
+            {
+                if (SetProperty(ref _state, value))
+                {
+                    OnPropertyChanged(nameof(IsInMenu));
+                    OnPropertyChanged(nameof(IsPlaying));
+                    OnPropertyChanged(nameof(IsInGameOver));
+                    OnPropertyChanged(nameof(ShowMenuOverlay));
+                    OnPropertyChanged(nameof(OverlayTitle));
+                    OnPropertyChanged(nameof(OverlaySubtitle));
+                }
+            }
+        }
+
+        public bool IsInMenu => State == GameState.Menu;
+        public bool IsPlaying => State == GameState.Playing;
+        public bool IsInGameOver => State == GameState.GameOver;
+
+        // For a single overlay that covers Menu + GameOver
+        public bool ShowMenuOverlay => State != GameState.Playing;
+
+        public string OverlayTitle => State switch
+        {
+            GameState.Menu => "Dungeon Explorer",
+            GameState.GameOver => "Game Over",
+            _ => string.Empty
+        };
+
+        public string OverlaySubtitle => State switch
+        {
+            GameState.Menu =>
+                "Welcome to Dungeon Explorer. Click 'New Game' to begin your quest. " +
+                "Collect all six legendary items before entering the Dungeon.",
+
+            GameState.GameOver =>
+                $"Final Score: {Score}. Click 'New Game' to play again.",
+
+            _ => string.Empty
+        };
 
         public GameViewModel()
         {
@@ -85,27 +139,72 @@ namespace DungeonExplorer.ViewModels
                 CurrentRoom = "Great Hall"
             };
 
-            // Compute par based on current layout (start, items, dungeon)
-            Par = _gameService.ComputePar(Player.CurrentRoom);
-
             MoveCount = 0;
             Score = 0;
+            Par = 0;
+            IsGameOver = false;
 
-            StatusMessage = BuildStatus("Your quest begins in the Great Hall...");
+            // Start in Menu state
+            State = GameState.Menu;
 
+            StatusMessage = BuildStatus("Welcome to Dungeon Explorer. Click 'New Game' to begin.");
+            // Movement Commands
             MoveNorthCommand = new RelayCommand(_ => Move("north"));
             MoveSouthCommand = new RelayCommand(_ => Move("south"));
             MoveEastCommand = new RelayCommand(_ => Move("east"));
             MoveWestCommand = new RelayCommand(_ => Move("west"));
-
             PickupItemCommand = new RelayCommand(_ => PickupItem());
 
-            UpdateCurrentRoomItem();
+            // Overlay Buttons
+            NewGameCommand = new RelayCommand(_ => StartNewGame());
+            GoToMenuCommand = new RelayCommand(_ => GoToMenu());
         }
 
+        private void StartNewGame()
+        {
+            // New game → new service (random items, new par)
+            _gameService = new GameService();
+
+            Player = new Player
+            {
+                Name = "Dex the Brave",
+                CurrentRoom = "Great Hall"
+            };
+
+            MoveCount = 0;
+            Score = 0;
+            IsGameOver = false;
+
+            Par = _gameService.ComputePar(Player.CurrentRoom);
+            UpdateCurrentRoomItem();
+
+            State = GameState.Playing;
+
+            StatusMessage = BuildStatus("Your quest begins in the Great Hall...");
+        }
+
+        private void GoToMenu()
+        {
+            // Reset basic state
+            MoveCount = 0;
+            Score = 0;
+            IsGameOver = false;
+
+            // Leave Player/Rooms alone; they won't be used until NewGame anyway
+            State = GameState.Menu;
+
+            StatusMessage = BuildStatus(
+                "Welcome back to the main menu. Click 'New Game' to begin a new quest.");
+        }
 
         private void Move(string direction)
         {
+            if (State != GameState.Playing)
+            {
+                StatusMessage = BuildStatus("The game is not currently in progress. Click 'New Game' to begin.");
+                return;
+            }
+
             if (IsGameOver)
             {
                 StatusMessage = BuildStatus("The game is over. Restart the game to play again.");
@@ -140,6 +239,7 @@ namespace DungeonExplorer.ViewModels
                     StatusMessage = BuildStatus(battleMessage);
 
                     IsGameOver = true;
+                    State = GameState.GameOver;
                     return;
                 }
             }
@@ -157,6 +257,12 @@ namespace DungeonExplorer.ViewModels
 
         private void PickupItem()
         {
+            if (State != GameState.Playing)
+            {
+                StatusMessage = BuildStatus("The game is not currently in progress. Click 'New Game' to begin.");
+                return;
+            }
+
             if (IsGameOver)
             {
                 StatusMessage = BuildStatus("The game is over. Restart the game to play again.");
