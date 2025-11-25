@@ -8,22 +8,52 @@
     </Window.Resources>
     <Grid Margin="16">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>            <!-- Game Over row -->
-            <RowDefinition Height="Auto"/>            <!-- Player info -->
-            <RowDefinition Height="Auto"/>            <!-- Current room -->
-            <RowDefinition Height="Auto"/>            <!-- Item -->
+            <RowDefinition Height="Auto"/>            <!-- Game Over -->
+            <RowDefinition Height="Auto"/>            <!-- Player -->
+            <RowDefinition Height="Auto"/>            <!-- Current Room -->
+            <RowDefinition Height="Auto"/>            <!-- Item in Room -->
+            <RowDefinition Height="Auto"/>            <!-- Stats (Moves/Par/Score) -->
             <RowDefinition Height="*"/>               <!-- Inventory -->
-            <RowDefinition Height="Auto"/>            <!-- Status + controls -->
+            <RowDefinition Height="Auto"/>            <!-- Status + Controls -->
         </Grid.RowDefinitions>
+        
+        <!-- Menu Overlay -->
+        <Border Background="#AA000000"
+        CornerRadius="12"
+        Padding="24"
+        Visibility="{Binding ShowMenuOverlay, Converter={StaticResource BoolToVis}}"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock Text="{Binding OverlayTitle}"
+                   FontSize="24"
+                   FontWeight="Bold"
+                   Foreground="White"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,8"/>
 
-        <!-- Game Over banner -->
-        <TextBlock Grid.Row="0"
-               Text="GAME OVER"
-               HorizontalAlignment="Center"
-               Foreground="Red"
-               FontSize="20"
-               FontWeight="Bold"
-               Visibility="{Binding IsGameOver, Converter={StaticResource BoolToVis}}"/>
+                <TextBlock Text="{Binding OverlaySubtitle}"
+                   FontSize="14"
+                   Foreground="White"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   Margin="0,0,0,16"/>
+
+                <Button Content="New Game"
+                Command="{Binding NewGameCommand}"
+                Width="120"
+                HorizontalAlignment="Center"
+                Margin="0,0,0,8"
+                Padding="4,2"/>
+
+                <Button Content="Main Menu"
+                Command="{Binding GoToMenuCommand}"
+                Width="120"
+                HorizontalAlignment="Center"
+                Padding="4,2"
+                Visibility="{Binding IsInGameOver, Converter={StaticResource BoolToVis}}"/>
+            </StackPanel>
+        </Border>
 
         <!-- Player info -->
         <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,0,0,8">
@@ -43,8 +73,20 @@
             <TextBlock Text="{Binding CurrentRoomItem}"/>
         </StackPanel>
 
+        <!-- Stats: Moves, Par, Score -->
+        <StackPanel Orientation="Horizontal" Grid.Row="4" Margin="0,0,0,8">
+            <TextBlock Text="Moves: " FontWeight="Bold"/>
+            <TextBlock Text="{Binding MoveCount}" Margin="0,0,16,0"/>
+
+            <TextBlock Text="Par: " FontWeight="Bold"/>
+            <TextBlock Text="{Binding Par}" Margin="0,0,16,0"/>
+
+            <TextBlock Text="Score: " FontWeight="Bold"/>
+            <TextBlock Text="{Binding Score}"/>
+        </StackPanel>
+
         <!-- Inventory -->
-        <GroupBox Grid.Row="4" Header="Inventory" Margin="0,8,0,0">
+        <GroupBox Grid.Row="5" Header="Inventory" Margin="0,8,0,0">
             <ItemsControl ItemsSource="{Binding Player.Inventory}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -55,7 +97,7 @@
         </GroupBox>
 
         <!-- Status + movement & pickup controls -->
-        <StackPanel Grid.Row="5" Margin="0,16,0,0">
+        <StackPanel Grid.Row="6" Margin="0,16,0,0">
             <TextBlock Text="{Binding StatusMessage}"
                    TextWrapping="Wrap"
                    Margin="0,0,0,8"/>
