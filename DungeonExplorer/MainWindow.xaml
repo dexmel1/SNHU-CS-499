@@ -53,9 +53,15 @@
                 <StackPanel Orientation="Horizontal"
                         Margin="0,0,0,8"
                         HorizontalAlignment="Center">
+                    
                     <CheckBox Content="Show only my scores"
                         IsChecked="{Binding ShowOnlyMyScores}"
                         Foreground="White"/>
+                    <CheckBox Content="Wins only"
+                        IsChecked="{Binding ShowWinsOnly}"
+                        Foreground="White"
+                        Margin="0,0,8,0"/>
+
                 </StackPanel>
 
                 <GroupBox Header="Top Scores" Width="300" Margin="0,0,0,16">

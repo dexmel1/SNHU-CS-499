@@ -12,6 +12,8 @@ namespace DungeonExplorer.Data
         public int Points { get; set; }
         public int Moves { get; set; }
         public int Par { get; set; }
+        public bool Won { get; set; }
+        public int ItemsCollected { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

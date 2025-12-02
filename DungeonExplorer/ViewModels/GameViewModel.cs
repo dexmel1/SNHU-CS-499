@@ -155,7 +155,6 @@ namespace DungeonExplorer.ViewModels
         public ObservableCollection<LeaderboardEntry> TopScores { get; } = new();
 
         private bool _showOnlyMyScores;
-
         public bool ShowOnlyMyScores
         {
             get => _showOnlyMyScores;
@@ -168,6 +167,18 @@ namespace DungeonExplorer.ViewModels
             }
         }
 
+        private bool _showWinsOnly;
+        public bool ShowWinsOnly
+        {
+            get => _showWinsOnly;
+            set
+            {
+                if (SetProperty(ref _showWinsOnly, value))
+                {
+                    LoadLeaderboard();
+                }
+            }
+        }
 
         private void LoadLeaderboard()
         {
@@ -188,11 +199,20 @@ namespace DungeonExplorer.ViewModels
                 entries = _leaderboardService.GetTopScores(10);
             }
 
+            // Filter: wins only
+            if (ShowWinsOnly)
+            {
+                entries = entries
+                    .Where(e => e.Won)
+                    .ToList();
+            }
+
             foreach (var entry in entries)
             {
                 TopScores.Add(entry);
             }
         }
+
 
 
         public GameViewModel()
@@ -314,9 +334,11 @@ namespace DungeonExplorer.ViewModels
                     // Save score to database (even if lost)
                     var nameToUse = string.IsNullOrWhiteSpace(PlayerName) ? "Unknown Hero" : PlayerName;
 
+                    int itemsCollected = Player.Inventory.Count;
+
                     try
                     {
-                        _leaderboardService.SaveScore(nameToUse, Score, MoveCount, Par);
+                        _leaderboardService.SaveScore(nameToUse, Score, MoveCount, Par, won, itemsCollected);
                     }
                     catch (Exception ex)
                     {

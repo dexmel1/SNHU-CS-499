@@ -11,6 +11,8 @@ namespace DungeonExplorer.Services
         public int Points { get; set; }
         public int Moves { get; set; }
         public int Par { get; set; }
+        public bool Won { get; set; }
+        public int ItemsCollected { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 
@@ -22,7 +24,7 @@ namespace DungeonExplorer.Services
             db.Database.EnsureCreated();
         }
 
-        public void SaveScore(string playerName, int points, int moves, int par)
+        public void SaveScore(string playerName, int points, int moves, int par, bool won, int itemsCollected)
         {
             using var db = new GameDbContext();
 
@@ -41,6 +43,8 @@ namespace DungeonExplorer.Services
                 Points = points,
                 Moves = moves,
                 Par = par,
+                Won = won,
+                ItemsCollected = itemsCollected,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -62,6 +66,8 @@ namespace DungeonExplorer.Services
                     Points = s.Points,
                     Moves = s.Moves,
                     Par = s.Par,
+                    Won = s.Won,
+                    ItemsCollected = s.ItemsCollected,
                     CreatedAt = s.CreatedAt
                 })
                 .ToList();
@@ -88,6 +94,8 @@ namespace DungeonExplorer.Services
                     Points = s.Points,
                     Moves = s.Moves,
                     Par = s.Par,
+                    Won = s.Won,
+                    ItemsCollected = s.ItemsCollected,
                     CreatedAt = s.CreatedAt
                 })
                 .ToList();
