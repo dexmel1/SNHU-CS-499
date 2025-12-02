@@ -1,6 +1,7 @@
-﻿using System.Windows.Input;
-using DungeonExplorer.Models;
+﻿using DungeonExplorer.Models;
 using DungeonExplorer.Services;
+using System.Collections.ObjectModel;
+using System.Windows.Input;
 
 namespace DungeonExplorer.ViewModels
 {
@@ -12,6 +13,7 @@ namespace DungeonExplorer.ViewModels
     }
     public class GameViewModel : BaseViewModel
     {
+        private readonly LeaderboardService _leaderboardService;
         private GameService _gameService;
         private Player _player;
         private string _statusMessage = string.Empty;
@@ -129,13 +131,100 @@ namespace DungeonExplorer.ViewModels
             _ => string.Empty
         };
 
+        private string _playerName = string.Empty;
+        public string PlayerName
+        {
+            get => _playerName;
+            set
+            {
+                if (SetProperty(ref _playerName, value))
+                {
+                    var nameToUse = string.IsNullOrWhiteSpace(_playerName)
+                        ? "Unknown Hero"
+                        : _playerName;
+
+                    if (Player != null)
+                    {
+                        Player.Name = nameToUse;
+                        OnPropertyChanged(nameof(Player));
+                    }
+                }
+            }
+        }
+
+        public ObservableCollection<LeaderboardEntry> TopScores { get; } = new();
+
+        private bool _showOnlyMyScores;
+        public bool ShowOnlyMyScores
+        {
+            get => _showOnlyMyScores;
+            set
+            {
+                if (SetProperty(ref _showOnlyMyScores, value))
+                {
+                    LoadLeaderboard();
+                }
+            }
+        }
+
+        private bool _showWinsOnly;
+        public bool ShowWinsOnly
+        {
+            get => _showWinsOnly;
+            set
+            {
+                if (SetProperty(ref _showWinsOnly, value))
+                {
+                    LoadLeaderboard();
+                }
+            }
+        }
+
+        private void LoadLeaderboard()
+        {
+            TopScores.Clear();
+
+            List<LeaderboardEntry> entries;
+
+            if (ShowOnlyMyScores)
+            {
+                var nameToUse = string.IsNullOrWhiteSpace(PlayerName)
+                    ? "Unknown Hero"
+                    : PlayerName;
+
+                entries = _leaderboardService.GetScoresForPlayer(nameToUse, 10);
+            }
+            else
+            {
+                entries = _leaderboardService.GetTopScores(10);
+            }
+
+            // Filter: wins only
+            if (ShowWinsOnly)
+            {
+                entries = entries
+                    .Where(e => e.Won)
+                    .ToList();
+            }
+
+            foreach (var entry in entries)
+            {
+                TopScores.Add(entry);
+            }
+        }
+
+
+
         public GameViewModel()
         {
+            _leaderboardService = new LeaderboardService();
             _gameService = new GameService();
+
+            var name = string.IsNullOrWhiteSpace(PlayerName) ? "Unknown Hero" : PlayerName;
 
             Player = new Player
             {
-                Name = "Dex the Brave",
+                Name = "Unknown Hero",
                 CurrentRoom = "Great Hall"
             };
 
@@ -158,6 +247,8 @@ namespace DungeonExplorer.ViewModels
             // Overlay Buttons
             NewGameCommand = new RelayCommand(_ => StartNewGame());
             GoToMenuCommand = new RelayCommand(_ => GoToMenu());
+
+            LoadLeaderboard();
         }
 
         private void StartNewGame()
@@ -167,7 +258,7 @@ namespace DungeonExplorer.ViewModels
 
             Player = new Player
             {
-                Name = "Dex the Brave",
+                Name = "Unknown Hero",
                 CurrentRoom = "Great Hall"
             };
 
@@ -192,6 +283,8 @@ namespace DungeonExplorer.ViewModels
 
             // Leave Player/Rooms alone; they won't be used until NewGame anyway
             State = GameState.Menu;
+
+            LoadLeaderboard();
 
             StatusMessage = BuildStatus(
                 "Welcome back to the main menu. Click 'New Game' to begin a new quest.");
@@ -237,6 +330,20 @@ namespace DungeonExplorer.ViewModels
 
                     battleMessage += $"\nFinal Score: {Score}";
                     StatusMessage = BuildStatus(battleMessage);
+
+                    // Save score to database (even if lost)
+                    var nameToUse = string.IsNullOrWhiteSpace(PlayerName) ? "Unknown Hero" : PlayerName;
+
+                    int itemsCollected = Player.Inventory.Count;
+
+                    try
+                    {
+                        _leaderboardService.SaveScore(nameToUse, Score, MoveCount, Par, won, itemsCollected);
+                    }
+                    catch (Exception ex)
+                    {
+                        battleMessage += $"\n[Error saving score: {ex.Message}]";
+                    }
 
                     IsGameOver = true;
                     State = GameState.GameOver;

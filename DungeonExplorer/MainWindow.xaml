@@ -39,6 +39,59 @@
                    TextAlignment="Center"
                    Margin="0,0,0,16"/>
 
+                <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,12"
+                        HorizontalAlignment="Center">
+                    <TextBlock Text="Player Name:"
+                        Foreground="White"
+                        VerticalAlignment="Center"
+                        Margin="0,0,8,0"/>
+                    <TextBox Text="{Binding PlayerName, UpdateSourceTrigger=PropertyChanged}"
+                        Width="160"/>
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,8"
+                        HorizontalAlignment="Center">
+                    
+                    <CheckBox Content="Show only my scores"
+                        IsChecked="{Binding ShowOnlyMyScores}"
+                        Foreground="White"/>
+                    <CheckBox Content="Wins only"
+                        IsChecked="{Binding ShowWinsOnly}"
+                        Foreground="White"
+                        Margin="0,0,8,0"/>
+
+                </StackPanel>
+
+                <GroupBox Header="Top Scores" Width="300" Margin="0,0,0,16">
+                    <StackPanel>
+                        <!-- Header Row -->
+                        <StackPanel Orientation="Horizontal" Margin="4,0,4,4">
+                            <TextBlock Text="Player" Width="120" Foreground="White" FontWeight="Bold"/>
+                            <TextBlock Text="Score"  Width="60"  Foreground="White" FontWeight="Bold"/>
+                            <TextBlock Text="Moves"  Width="50"  Foreground="White" FontWeight="Bold"/>
+                            <TextBlock Text="Par"    Width="50"  Foreground="White" FontWeight="Bold"/>
+                        </StackPanel>
+
+                        <!-- Score Rows -->
+                        <ItemsControl ItemsSource="{Binding TopScores}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="4">
+                                        <TextBlock Text="{Binding PlayerName}" Width="120" Foreground="White"/>
+                                        <TextBlock Text="{Binding Points}"     Width="60"  Foreground="White"/>
+                                        <TextBlock Text="{Binding Moves}"      Width="50"  Foreground="White"/>
+                                        <TextBlock Text="{Binding Par}"        Width="50"  Foreground="White"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                    </StackPanel>
+                </GroupBox>
+
+
                 <Button Content="New Game"
                 Command="{Binding NewGameCommand}"
                 Width="120"
